@@ -24,6 +24,8 @@ target_include_directories(glm INTERFACE dependencies/glm)
 # ======== Life-GUI ========
 add_executable(
 	life-gui
+	solver.hpp
+	reference.hpp
 	main-gui.cpp
 	utils.cpp
 )
@@ -33,6 +35,8 @@ target_include_directories(life-gui PUBLIC . dependencies/)
 # ======== Life-Benchmark ========
 add_executable(
 	life-benchmark
+	solver.hpp
+	reference.hpp
 	main-benchmark.cpp
 	utils.cpp
 )

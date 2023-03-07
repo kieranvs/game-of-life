@@ -1,6 +1,8 @@
 #include <chrono>
+#include <optional>
 
 #include "solver.hpp"
+#include "reference.hpp"
 #include "utils.hpp"
 
 constexpr int dim = 2050;
@@ -17,7 +19,7 @@ uint32_t count_alive()
 }
 
 template <typename Solver>
-void run(const char* name)
+uint64_t run(const char* name, std::optional<uint64_t> ref_timing = std::nullopt)
 {
 	for (int i = 0; i < dim * dim; i++)
     	buf_current[i] = 0;
@@ -43,7 +45,15 @@ void run(const char* name)
 
     auto alive = count_alive();
     
-    printf("%s: %zd ms, alive=%d\n", name, duration_ms, alive);
+    if (ref_timing.has_value())
+    {
+		float speedup = (float)ref_timing.value() / (float)duration_ms;
+		printf("%s: %zd ms, alive=%d, speedup=%.1fx\n", name, duration_ms, alive, speedup);
+    }
+    else
+		printf("%s: %zd ms, alive=%d\n", name, duration_ms, alive);
+
+    return duration_ms;
 }
 
 int main()
@@ -51,5 +61,6 @@ int main()
 	buf_current = new uint8_t[dim * dim];
 	buf_next = new uint8_t[dim * dim];
 
-	run<SolverNaive<dim>>("naive");
+	auto ref_timing = run<SolverReference<dim>>("reference");
+	run<SolverNaive<dim>>("naive", ref_timing);
 }
