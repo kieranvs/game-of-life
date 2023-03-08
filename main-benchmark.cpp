@@ -1,5 +1,6 @@
 #include <chrono>
 #include <optional>
+#include <algorithm>
 
 #include "solver.hpp"
 #include "reference.hpp"
@@ -19,41 +20,50 @@ uint32_t count_alive()
 }
 
 template <typename Solver>
-uint64_t run(const char* name, std::optional<uint64_t> ref_timing = std::nullopt)
+int64_t run(const char* name, std::optional<int64_t> ref_timing = std::nullopt)
 {
-	for (int i = 0; i < dim * dim; i++)
-    	buf_current[i] = 0;
+	int64_t best_time = std::numeric_limits<int64_t>::max();
+	int num_runs = 0;
 
-    for (int i = 0; i < dim * dim; i++)
-    	buf_next[i] = 0;
+	while (num_runs < 3 || (num_runs < 10 && best_time < 500))
+	{
+		for (int i = 0; i < dim * dim; i++)
+			buf_current[i] = 0;
 
-    place_lidka(dim, 1000, 1000, buf_current);
+	    for (int i = 0; i < dim * dim; i++)
+			buf_next[i] = 0;
 
-    auto start_timepoint = std::chrono::high_resolution_clock::now();
+	    place_lidka(dim, 1000, 1000, buf_current);
 
-    Solver solver;
+	    auto start_timepoint = std::chrono::high_resolution_clock::now();
 
-    for (int gen = 0; gen < 100; gen++)
-    {
-    	solver.update(buf_current, buf_next);
-		std::swap(buf_current, buf_next);
-    }
+	    Solver solver;
 
-    auto end_timepoint = std::chrono::high_resolution_clock::now();
+	    for (int gen = 0; gen < 100; gen++)
+	    {
+			solver.update(buf_current, buf_next);
+			std::swap(buf_current, buf_next);
+	    }
 
-	auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_timepoint - start_timepoint).count();
+	    auto end_timepoint = std::chrono::high_resolution_clock::now();
+
+		auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_timepoint - start_timepoint).count();
+
+		best_time = std::min(best_time, duration_ms);
+		num_runs += 1;
+	}
 
     auto alive = count_alive();
     
     if (ref_timing.has_value())
     {
-		float speedup = (float)ref_timing.value() / (float)duration_ms;
-		printf("%s: %zd ms, alive=%d, speedup=%.1fx\n", name, duration_ms, alive, speedup);
+		float speedup = (float)ref_timing.value() / (float)best_time;
+		printf("%s: %zd ms, alive=%d, runs=%d, speedup=%.1fx\n", name, best_time, alive, num_runs, speedup);
     }
     else
-		printf("%s: %zd ms, alive=%d\n", name, duration_ms, alive);
+		printf("%s: %zd ms, alive=%d, runs=%d\n", name, best_time, alive, num_runs);
 
-    return duration_ms;
+    return best_time;
 }
 
 int main()
