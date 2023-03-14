@@ -23,6 +23,32 @@ void quit(GLFWwindow *window, int key, int scancode, int action, int mods)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
+template <typename Solver>
+void do_init(Solver& solver)
+{
+    constexpr int api = get_solver_api_version<SolverNaive<dim>>();
+
+    if constexpr (api == 2)
+        solver.init(buf_current);
+}
+
+template <typename Solver>
+void do_update(Solver& solver)
+{
+    constexpr int api = get_solver_api_version<SolverNaive<dim>>();
+
+    if constexpr (api == 1)
+    {
+        solver.update(buf_current, buf_next);
+        std::swap(buf_current, buf_next);
+    }
+    else
+    {
+        solver.update();
+        solver.get_results(buf_current);
+    }
+}
+
 int main()
 {
     glfwInit();
@@ -128,10 +154,12 @@ int main()
 
 	SolverNaive<dim> solver;
 
+    do_init(solver);
+
     while (!glfwWindowShouldClose(window))
     {
-    	solver.update(buf_current, buf_next);
-		std::swap(buf_current, buf_next);
+        do_update(solver);
+
 #ifdef _WIN32
 		Sleep(100);
 #else
