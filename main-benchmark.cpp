@@ -1,6 +1,7 @@
 #include <chrono>
 #include <optional>
 #include <algorithm>
+#include <cstdio>
 
 #include "solver.hpp"
 #include "reference.hpp"

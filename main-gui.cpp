@@ -1,4 +1,4 @@
-#include <GLAD/gl.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
@@ -132,8 +132,11 @@ int main()
     {
     	solver.update(buf_current, buf_next);
 		std::swap(buf_current, buf_next);
-
+#ifdef _WIN32
 		Sleep(100);
+#else
+        sleep(0.1);
+#endif
 
     	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, dim, dim, 0, GL_RED, GL_UNSIGNED_BYTE, buf_current);
 
