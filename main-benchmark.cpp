@@ -6,7 +6,7 @@
 #include "reference.hpp"
 #include "utils.hpp"
 
-constexpr int dim = 2050;
+constexpr int dim = 4098;
 uint8_t* buf_current;
 uint8_t* buf_next;
 
@@ -73,4 +73,41 @@ int main()
 
 	auto ref_timing = run<SolverReference<dim>>("reference");
 	run<SolverNaive<dim>>("naive", ref_timing);
+    run<SolverBorder<dim>>("border", ref_timing);
+    run<SolverAVX<dim>>("simd", ref_timing);
+
+    // run<SolverMT_Busy<dim, 2>>("mt-busy-2", ref_timing);
+    // run<SolverMT_Busy<dim, 4>>("mt-busy-4", ref_timing);
+    // run<SolverMT_Busy<dim, 6>>("mt-busy-6", ref_timing);
+    // run<SolverMT_Busy<dim, 8>>("mt-busy-8", ref_timing);
+    // run<SolverMT_Busy<dim, 10>>("mt-busy-10", ref_timing);
+    // run<SolverMT_Busy<dim, 12>>("mt-busy-12", ref_timing);
+    // run<SolverMT_Busy<dim, 14>>("mt-busy-14", ref_timing);
+    // run<SolverMT_Busy<dim, 16>>("mt-busy-16", ref_timing);
+    run<SolverMT_Busy<dim, 18>>("mt-busy-18", ref_timing);
+    run<SolverMT_Busy<dim, 20>>("mt-busy-20", ref_timing);
+
+    // run<SolverMT<dim, 2, false>>("mt-2", ref_timing);
+    // run<SolverMT<dim, 4, false>>("mt-4", ref_timing);
+    // run<SolverMT<dim, 6, false>>("mt-6", ref_timing);
+    // run<SolverMT<dim, 8, false>>("mt-8", ref_timing);
+    // run<SolverMT<dim, 10, false>>("mt-10", ref_timing);
+    // run<SolverMT<dim, 12, false>>("mt-12", ref_timing);
+    // run<SolverMT<dim, 14, false>>("mt-14", ref_timing);
+    // run<SolverMT<dim, 16, false>>("mt-16", ref_timing);
+    // run<SolverMT<dim, 18, false>>("mt-18", ref_timing);
+    run<SolverMT<dim, 20, false>>("mt-20", ref_timing);
+
+    run<SolverMT<dim, 2, true>>("mt-simd-2", ref_timing);
+    run<SolverMT<dim, 4, true>>("mt-simd-4", ref_timing);
+    run<SolverMT<dim, 6, true>>("mt-simd-6", ref_timing);
+    run<SolverMT<dim, 8, true>>("mt-simd-8", ref_timing);
+    run<SolverMT<dim, 10, true>>("mt-simd-10", ref_timing);
+    run<SolverMT<dim, 12, true>>("mt-simd-12", ref_timing);
+    run<SolverMT<dim, 14, true>>("mt-simd-14", ref_timing);
+    run<SolverMT<dim, 16, true>>("mt-simd-16", ref_timing);
+    run<SolverMT<dim, 18, true>>("mt-simd-18", ref_timing);
+    run<SolverMT<dim, 20, true>>("mt-simd-20", ref_timing);
+
+    return 0;
 }
