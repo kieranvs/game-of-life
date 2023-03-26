@@ -3,6 +3,7 @@
 #include <thread>
 #include <mutex>
 #include <algorithm>
+#include <condition_variable>
 
 template <int dim>
 struct SolverNaive
@@ -116,7 +117,7 @@ struct SolverAVX
 				__m256i b = _mm256_and_si256(ncr, n3);
 				__m256i result = _mm256_and_si256(_mm256_or_si256(a, b), _mm256_set1_epi8(1));
 				
-				_mm256_storeu_epi8((void*)&buf_next[i + dim * j], result);
+				_mm256_storeu_si256((__m256i*)&buf_next[i + dim * j], result);
 			}
 		}
 	}
@@ -194,7 +195,7 @@ void do_slice_simd(int j_start, uint8_t* buf_current, uint8_t* buf_next)
 			__m256i b = _mm256_and_si256(ncr, n3);
 			__m256i result = _mm256_and_si256(_mm256_or_si256(a, b), _mm256_set1_epi8(1));
 			
-			_mm256_storeu_epi8((void*)&buf_next[i + dim * j], result);
+			_mm256_storeu_si256((__m256i*)&buf_next[i + dim * j], result);
 		}
 	}
 }
@@ -202,7 +203,6 @@ void do_slice_simd(int j_start, uint8_t* buf_current, uint8_t* buf_next)
 template <int dim, int num_threads>
 struct SolverMT_Busy
 {
-	template <int num_threads>
 	struct MT_Control
 	{
 		uint8_t* buf_current{};
@@ -213,8 +213,7 @@ struct SolverMT_Busy
 	    std::atomic<bool> kill_flag[num_threads];
 	};
 
-	template <int dim, int num_threads>
-	static void worker_func(MT_Control<num_threads>* ptr, int id)
+	static void worker_func(MT_Control* ptr, int id)
 	{
 		auto& control = *ptr;
 		
@@ -240,7 +239,7 @@ struct SolverMT_Busy
 	}
 
 	std::optional<std::thread> threads[num_threads];
-	MT_Control<num_threads> control;
+	MT_Control control;
 
 	SolverMT_Busy()
 	{
@@ -253,7 +252,7 @@ struct SolverMT_Busy
 
 		for (int i = 0; i < num_threads; i++)
 		{
-			threads[i].emplace(worker_func<dim, num_threads>, &control, i);
+			threads[i].emplace(worker_func, &control, i);
 		}
 	}
 
@@ -296,7 +295,6 @@ struct SolverMT_Busy
 template <int dim, int num_threads, bool simd>
 struct SolverMT
 {
-	template <int num_threads>
 	struct MT_Control
 	{
 		uint8_t* buf_current{};
@@ -313,8 +311,7 @@ struct SolverMT
 	    std::atomic<bool> kill_flag[num_threads];
 	};
 
-	template <int dim, int num_threads, bool simd>
-	static void worker_func(MT_Control<num_threads>* ptr, int id)
+	static void worker_func(MT_Control* ptr, int id)
 	{
 		auto& control = *ptr;
 		
@@ -359,7 +356,7 @@ struct SolverMT
 	}
 
 	std::optional<std::thread> threads[num_threads];
-	MT_Control<num_threads> control;
+	MT_Control control;
 
 	SolverMT()
 	{
@@ -372,7 +369,7 @@ struct SolverMT
 
 		for (int i = 0; i < num_threads; i++)
 		{
-			threads[i].emplace(worker_func<dim, num_threads, simd>, &control, i);
+			threads[i].emplace(worker_func, &control, i);
 		}
 	}
 
