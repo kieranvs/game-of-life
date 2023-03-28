@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
-project(Life VERSION 0.1)
+project(Life VERSION 0.1 LANGUAGES C CXX CUDA)
+enable_language(CUDA)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -9,6 +10,10 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 endif()
+
+set(CMAKE_CUDA_ARCHITECTURES 61)
+
+find_package(CUDAToolkit)
 
 # ======== GLAD ========
 add_subdirectory(dependencies/glad/cmake)
@@ -44,5 +49,7 @@ add_executable(
 	reference.hpp
 	main-benchmark.cpp
 	utils.cpp
+	kernel.cu
 )
-target_include_directories(life-benchmark PUBLIC .)
+target_include_directories(life-benchmark PUBLIC . "/opt/cuda/include")
+target_link_libraries(life-gui PRIVATE CUDA::cudart)

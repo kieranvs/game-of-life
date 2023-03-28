@@ -423,3 +423,77 @@ struct SolverMT
 			control.done_flag[i] = false;
 	}
 };
+
+#include <cuda_runtime.h>
+
+void run_kernel(uint8_t* buf_current, uint8_t* buf_next, int dim);
+
+template <int dim>
+struct SolverCUDA
+{
+	constexpr static int get_api_version() { return 2;	}
+
+	uint8_t* device_buf_a = nullptr;
+	uint8_t* device_buf_b = nullptr;
+
+	SolverCUDA()
+	{
+		cudaSetDevice(0);
+		auto err = cudaMalloc((void **)&device_buf_a, dim * dim);
+		if (err != cudaSuccess)
+		{
+			fprintf(stderr, "Failed to allocate device memory (error code %s)!\n", cudaGetErrorString(err));
+			exit(-1);
+		}
+
+		err = cudaMalloc((void **)&device_buf_b, dim * dim);
+		if (err != cudaSuccess)
+		{
+			fprintf(stderr, "Failed to allocate device memory (error code %s)!\n", cudaGetErrorString(err));
+			exit(-1);
+		}
+	}
+
+	~SolverCUDA()
+	{
+		auto err = cudaFree(device_buf_a);
+		if (err != cudaSuccess)
+		{
+			fprintf(stderr, "Failed to free device memory (error code %s)!\n", cudaGetErrorString(err));
+			exit(-1);
+		}
+
+		err = cudaFree(device_buf_b);
+		if (err != cudaSuccess)
+		{
+			fprintf(stderr, "Failed to free device memory (error code %s)!\n", cudaGetErrorString(err));
+			exit(-1);
+		}
+	}
+
+	void init(uint8_t* buf)
+	{
+		auto err = cudaMemcpy(device_buf_a, buf, dim * dim, cudaMemcpyHostToDevice);
+		if (err != cudaSuccess)
+		{
+			fprintf(stderr,	"Failed to copy from host to device (error code %s)!\n", cudaGetErrorString(err));
+			exit(-1);
+		}
+	}
+
+	void get_results(uint8_t* buf)
+	{
+		auto err = cudaMemcpy(buf, device_buf_a, dim * dim, cudaMemcpyDeviceToHost);
+		if (err != cudaSuccess)
+		{
+			fprintf(stderr, "Failed to copy from device to host (error code %s)!\n", cudaGetErrorString(err));
+			exit(-1);
+		}
+	}
+
+	void update()
+	{
+		run_kernel(device_buf_a, device_buf_b, dim);
+		std::swap(device_buf_a, device_buf_b);
+	}
+};
